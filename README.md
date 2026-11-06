@@ -15,7 +15,7 @@ bring-up and DMA loopback to FINN integration and RTL MaxPool.
 Vivado projects were developed using version 2022.2.
 
 FINN network is based on the work of
-[Calì et al.](https://doi.org/10.3390/electronics14203993).
+[Calì et al.](https://doi.org/10.3390/electronics14203993)
 
 ## Vivado projects
 
