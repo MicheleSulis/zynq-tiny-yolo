@@ -1,0 +1,14 @@
+*.o
+*.d
+*.elf
+*.pyc
+.DS_Store
+__pycache__/
+finn-output*.bin
+.Xil/
+*.jou
+*.log
+*.str
+*.wdb
+*.vcd
+release-assets/
