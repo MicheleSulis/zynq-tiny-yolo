@@ -10,7 +10,7 @@ LIBS := -lc_nano -lnosys
 SRCS := startup.s cache.s mynosys.c ps7_init.c
 SRCS += irq_ctrl_gic.c exceptions.c scheduler.c
 SRCS += zynq.c uart.c dma.c
-SRCS += picture.bin
+SRCS += pictures.bin
 
 OUT1 := zynq.elf
 LLD1 := zynq.ld

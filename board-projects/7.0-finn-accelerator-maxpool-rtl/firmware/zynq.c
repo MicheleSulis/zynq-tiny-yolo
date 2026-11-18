@@ -26,9 +26,9 @@ static const char *dma_result_str[] = {
 	"DMA HALTED",
 	"OK"};
 
-// test parameters
-#define RX_TRANSFER_LEN 13 * 13 * 18
-#define TX_TRANSFER_LEN 416 * 416 * 3
+#define N_IMAGES 3 // Set to 0 for the latency and throughput tests.
+#define RX_TRANSFER_LEN (13 * 13 * 18)
+#define TX_TRANSFER_LEN (416 * 416 * 3)
 #define N_TRANSFERS (100 * 1000)
 
 static int processor_mode;
@@ -148,7 +148,9 @@ int main(void)
 	uart_setup();
 	dma_setup();
 	
+#if N_IMAGES == 0
 	*(volatile uint32_t *)0xF8F00208 = 1;
+#endif
 
 	//show_processor_mode();
 	__asm__("CPSIE i");
@@ -156,16 +158,17 @@ int main(void)
 	//show_processor_mode();
 
 	// main execution
-	extern uint8_t _binary_picture_bin_start[];
+	extern uint8_t _binary_pictures_bin_start[];
 	static volatile uint8_t rx_buf[RX_TRANSFER_LEN] __attribute__((section(".dma_nocache"), aligned(DMA_ALIGNMENT)));
 
 
+#if N_IMAGES == 0
 	// --- Single transfer latency test ---
 	event_clear(dma_tx_done | dma_rx_done | dma_tx_err | dma_rx_err);
 
 	enum dma_result rx_res = dma_start_rx((uint32_t)rx_buf, RX_TRANSFER_LEN);
 	uint32_t tick = *(volatile uint32_t *)0xF8F00200;
-	enum dma_result tx_res = dma_start_tx((uint32_t)_binary_picture_bin_start, TX_TRANSFER_LEN);
+	enum dma_result tx_res = dma_start_tx((uint32_t)_binary_pictures_bin_start, TX_TRANSFER_LEN);
 
 	if (rx_res != DMA_OK)
 	{
@@ -221,7 +224,14 @@ int main(void)
 	tick = *(volatile uint32_t *)0xF8F00200 - tick;
 	serial_print_dec("Latency (us): ", tick / 333, "\r\n");
 	
-	// --- N_TRANSFERS pipelined transfers ---
+#endif
+
+#if N_IMAGES > 0
+	static uint8_t tensors[N_IMAGES * RX_TRANSFER_LEN];
+#endif
+	const int transfers = N_IMAGES ? N_IMAGES : N_TRANSFERS;
+
+	// --- Pipelined transfers ---
 	event_clear(dma_tx_done | dma_rx_done | dma_tx_err | dma_rx_err);
 
 	int tx_count = 0;
@@ -230,9 +240,9 @@ int main(void)
 
 	// Start first RX and first TX
 	dma_start_rx((uint32_t)rx_buf, RX_TRANSFER_LEN);
-	dma_start_tx((uint32_t)_binary_picture_bin_start, TX_TRANSFER_LEN);
+	dma_start_tx((uint32_t)_binary_pictures_bin_start, TX_TRANSFER_LEN);
 
-	while (rx_count < N_TRANSFERS || tx_count < N_TRANSFERS)
+	while (rx_count < transfers || tx_count < transfers)
 	{
 		wait_for_events(dma_tx_done | dma_rx_done | dma_tx_err | dma_rx_err);
 
@@ -254,26 +264,34 @@ int main(void)
 		{
 			event_clear(dma_tx_done);
 			tx_count++;
-			if (tx_count < N_TRANSFERS)
+			if (tx_count < transfers)
 			{
-				dma_start_tx((uint32_t)_binary_picture_bin_start, TX_TRANSFER_LEN);
+				const uint8_t *picture = _binary_pictures_bin_start + (N_IMAGES ? tx_count * TX_TRANSFER_LEN : 0);
+				dma_start_tx((uint32_t)picture, TX_TRANSFER_LEN);
 			}
 		}
 
 		if (event_test(dma_rx_done))
 		{
 			event_clear(dma_rx_done);
+#if N_IMAGES > 0
+			memcpy(tensors + rx_count * RX_TRANSFER_LEN, (const void *)rx_buf, RX_TRANSFER_LEN);
+#endif
 			rx_count++;
-			if (rx_count < N_TRANSFERS)
+			if (rx_count < transfers)
 			{
 				dma_start_rx((uint32_t)rx_buf, RX_TRANSFER_LEN);
 			}
-			if (rx_count % 100 == 0)
+			if (N_IMAGES == 0 && rx_count % 100 == 0)
 			{
 				serial_print_dec("RX completed (100 images batch): ", rx_count, "\r\n");
 			}
 		}
 	}
+
+#if N_IMAGES > 0
+	uart_send(tensors, sizeof(tensors));
+#endif
 
 	return 0;
 }

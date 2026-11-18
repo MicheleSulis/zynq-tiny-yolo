@@ -30,6 +30,6 @@ monitor mdw 0xF8000170 1
 monitor rbp 0xFFFE00EC
 
 hb zynq.c:147
-restore picture.bin binary (uint8_t*)&_binary_picture_bin_start
+restore pictures.bin binary (uint8_t*)&_binary_pictures_bin_start
 
 continue

@@ -28,3 +28,8 @@ Original code and contributions by Michele Sulis are licensed under
 [BSD-3-Clause](LICENSE). Third-party code retains its original copyright
 notices and licenses, including [Apache-2.0](LICENSE-APACHE-2.0.txt)
 for Arm/CMSIS components.
+
+The TRANSSET images in project 7.0 are by Tewodros Gebre, Quincy Blackston
+and Leila Hashemi-Beni ([dataset](https://doi.org/10.6084/m9.figshare.26082217.v5),
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)).
+`pictures.bin` contains resized RGB versions of those images.

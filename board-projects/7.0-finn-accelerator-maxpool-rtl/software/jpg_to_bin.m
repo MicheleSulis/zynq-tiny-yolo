@@ -1,12 +1,9 @@
-close all; clear; clc;
-C = imread("picture.jpg","jpg");
+N = 3;
+images = {'file_03250.jpg', 'file_03528.jpg', 'file_03580.jpg'};
 
-fileID = fopen("picture.bin","a+");
-for i=1:size(C,1)
-    for j=1:size(C,2)
-        fwrite(fileID, C(i,j,1));
-        fwrite(fileID, C(i,j,2));
-        fwrite(fileID, C(i,j,3));
-    end
+fileID = fopen('../firmware/pictures.bin', 'wb');
+for n = 1:N
+    C = imresize(imread(images{n}), [416 416]);
+    fwrite(fileID, permute(C, [3 2 1]), 'uint8');
 end
 fclose(fileID);
